@@ -1,0 +1,14 @@
+* YAML utilities
+
+Have a common and simplistic subset of YAML elements for some of my
+cloud needs available. Basically filling the gap between annoyance of
+string dancing to what templating acrobatics provide minus the nasty
+"oh, let's just indent it and hope it be the correct amount".
+
+Uses "gopkg.in/yaml.v3" and wraps some structs around it.
+
+* Usage
+
+Uses Go 1.18 (as this is what I use with pulumi right now) and a
+
+go get github.com/nelbrecht/cyaml should get you going.
