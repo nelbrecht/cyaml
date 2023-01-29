@@ -1,4 +1,4 @@
-package main
+package cyaml
 
 import (
 	"testing"
@@ -14,7 +14,7 @@ func TestWriteFiles(t *testing.T) {
 		{
 			"authorized_keys",
 			WriteFiles{[]FileToWrite{
-				FileToWrite{
+				{
 					Path:    "/home/u/.ssh/authorized_keys",
 					Content: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2LVzkp5iPHX8x== foo@bar",
 					Append:  true,
@@ -22,22 +22,22 @@ func TestWriteFiles(t *testing.T) {
 			}},
 			`write_files:
     - path: /home/u/.ssh/authorized_keys
-      content: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2LVzkp5iPHX8x== foo@bar
       append: true
+      content: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2LVzkp5iPHX8x== foo@bar
 `,
 			false,
 		},
 		{
 			"some_multilin",
 			WriteFiles{[]FileToWrite{
-				FileToWrite{
+				{
 					Path: "/some-multiline",
 					Content: `foo
 bar
 foobar`,
 					Append: false,
 				},
-				FileToWrite{
+				{
 					Path: "/some-multiline2",
 					Content: `foo
 bar
@@ -47,24 +47,23 @@ foobar`,
 			}},
 			`write_files:
     - path: /some-multiline
+      append: false
       content: |-
         foo
         bar
         foobar
-      append: false
     - path: /some-multiline2
+      append: false
       content: |-
         foo
         bar
         foobar
-      append: false
 `,
 			false,
 		},
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Logf("running %s\n", testCase.name)
 			actualResult := testCase.testData.String()
 			if (actualResult != testCase.expResult) != testCase.wantErr {
 				t.Logf("%+v\n", string(actualResult))
@@ -89,15 +88,89 @@ func TestFileToWrite(t *testing.T) {
 				Append:  true,
 			},
 			`path: /home/u/.ssh/authorized_keys
-content: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2LVzkp5iPHX8x== foo@bar
 append: true
+content: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC2LVzkp5iPHX8x== foo@bar
+`,
+			false,
+		},
+		{
+			"full_file",
+			FileToWrite{
+				Append:      true,
+				Content:     "dGVzdAo=",
+				Defer:       true,
+				Encoding:    "b64",
+				Owner:       "syslog:staff",
+				Path:        "/home/u/full_file",
+				Permissions: "4755",
+			},
+			`path: /home/u/full_file
+append: true
+content: dGVzdAo=
+defer: true
+encoding: b64
+owner: syslog:staff
+permissions: "4755"
 `,
 			false,
 		},
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Logf("running %s\n", testCase.name)
+			actualResult := testCase.testData.String()
+			if (actualResult != testCase.expResult) != testCase.wantErr {
+				t.Logf("%+v\n", string(actualResult))
+				t.Errorf("failed, expected %s", testCase.expResult)
+			}
+		})
+	}
+}
+func TestFileContentToWrite(t *testing.T) {
+	tests := []struct {
+		name          string
+		testData      FileToWrite
+		localFileName string
+		expResult     string
+		wantErr       bool
+	}{
+		{
+			"read_file",
+			FileToWrite{
+				Path:   "/home/u/testfile",
+				Append: true,
+			},
+			"testfile",
+			`path: /home/u/testfile
+append: true
+content: YXNkZgpmb28gYmFy
+encoding: b64
+`,
+			false,
+		},
+		{
+			"full_file",
+			FileToWrite{
+				Path:        "/home/u/full_file",
+				Append:      true,
+				Defer:       true,
+				Owner:       "syslog:staff",
+				Permissions: "4755",
+			},
+			"testfile",
+			`path: /home/u/full_file
+append: true
+content: YXNkZgpmb28gYmFy
+defer: true
+encoding: b64
+owner: syslog:staff
+permissions: "4755"
+`,
+			false,
+		},
+	}
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			testCase.testData.AddLocalFile(testCase.localFileName)
 			actualResult := testCase.testData.String()
 			if (actualResult != testCase.expResult) != testCase.wantErr {
 				t.Logf("%+v\n", string(actualResult))
@@ -130,7 +203,6 @@ id`),
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Logf("running %s\n", testCase.name)
 			actualResult := testCase.testData.String()
 			if (actualResult != testCase.expResult) != testCase.wantErr {
 				t.Logf("%+v\n", string(actualResult))
@@ -166,7 +238,6 @@ func TestRunCmds(t *testing.T) {
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Logf("running %s\n", testCase.name)
 			actualResult := testCase.testData.String()
 			if (actualResult != testCase.expResult) != testCase.wantErr {
 				t.Logf("%+v\n", string(actualResult))
@@ -211,7 +282,6 @@ runcmd:
 	}
 	for _, testCase := range tests {
 		t.Run(testCase.name, func(t *testing.T) {
-			t.Logf("running %s\n", testCase.name)
 			actualResult := testCase.testData.String()
 			if (actualResult != testCase.expResult) != testCase.wantErr {
 				t.Logf("%+v\n", string(actualResult))

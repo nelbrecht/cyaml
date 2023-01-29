@@ -1,13 +1,33 @@
-package main
+package cyaml
 
 import (
+	"encoding/base64"
+	"log"
+	"os"
+
 	"gopkg.in/yaml.v3"
 )
 
 type FileToWrite struct {
-	Path    string `yaml:"path"`
-	Content string `yaml:"content"`
-	Append  bool   `yaml:"append"`
+	Path        string `yaml:"path"`
+	Append      bool   `yaml:"append"`
+	Content     string `yaml:"content"`
+	Defer       bool   `yaml:"defer,omitempty"`
+	Encoding    string `yaml:"encoding,omitempty"`
+	Owner       string `yaml:"owner,omitempty"`
+	Permissions string `yaml:"permissions,omitempty"`
+}
+
+func (cyaml *FileToWrite) AddLocalFile(path string) {
+	if path != "" {
+		fileContent, err := os.ReadFile(path)
+		if err != nil {
+			log.Fatalf("file %s could not be read\n%s", path, err.Error())
+			fileContent = []byte("")
+		}
+		cyaml.Content = base64.StdEncoding.EncodeToString(fileContent)
+		cyaml.Encoding = "b64"
+	}
 }
 
 func (cyaml *FileToWrite) String() string {
