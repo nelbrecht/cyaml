@@ -52,9 +52,9 @@ func (cyaml *WriteFiles) String() string {
 	return string(result)
 }
 
-type RunCmd string
+type CliCmd string
 
-func (cyaml *RunCmd) String() string {
+func (cyaml *CliCmd) String() string {
 	result, err := yaml.Marshal(cyaml)
 	if err != nil {
 		return ""
@@ -64,10 +64,23 @@ func (cyaml *RunCmd) String() string {
 }
 
 type RunCmds struct {
-	CommandsToRun []RunCmd `yaml:"runcmd,omitempty"`
+	CommandsToRun []CliCmd `yaml:"runcmd,omitempty"`
 }
 
 func (cyaml *RunCmds) String() string {
+	result, err := yaml.Marshal(cyaml)
+	if err != nil {
+		return ""
+	}
+
+	return string(result)
+}
+
+type BootCmds struct {
+	CommandsToRun []CliCmd `yaml:"bootcmd,omitempty"`
+}
+
+func (cyaml *BootCmds) String() string {
 	result, err := yaml.Marshal(cyaml)
 	if err != nil {
 		return ""
@@ -80,7 +93,8 @@ type UserData struct {
 	PackageUpdate  bool          `yaml:"package_update"`
 	PackageUpgrade bool          `yaml:"package_upgrade"`
 	WriteFiles     []FileToWrite `yaml:"write_files,omitempty"`
-	RunCmds        []RunCmd      `yaml:"runcmd,omitempty"`
+	RunCmds        []CliCmd      `yaml:"runcmd,omitempty"`
+	BootCmds       []CliCmd      `yaml:"bootcmd,omitempty"`
 }
 
 func (cyaml *UserData) String() string {

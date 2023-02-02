@@ -180,22 +180,22 @@ permissions: "4755"
 	}
 }
 
-func TestRunCmd(t *testing.T) {
+func TestCliCmd(t *testing.T) {
 	tests := []struct {
 		name      string
-		testData  RunCmd
+		testData  CliCmd
 		expResult string
 		wantErr   bool
 	}{
 		{
 			"cmd",
-			RunCmd("cmd"),
+			CliCmd("cmd"),
 			"cmd\n",
 			false,
 		},
 		{
 			"multicmd",
-			RunCmd(`date
+			CliCmd(`date
 id`),
 			"|-\n    date\n    id\n",
 			false,
@@ -212,6 +212,42 @@ id`),
 	}
 }
 
+func TestBootCmds(t *testing.T) {
+	tests := []struct {
+		name      string
+		testData  BootCmds
+		expResult string
+		wantErr   bool
+	}{
+		{
+			"single commands",
+			BootCmds{[]CliCmd{
+				"foo", "bar", "foobar",
+			}},
+			"bootcmd:\n    - foo\n    - bar\n    - foobar\n",
+			false,
+		},
+		{
+			"multiple commands",
+			BootCmds{[]CliCmd{
+				"foo", "bar\nbarfoo\nbarbar", "foobar",
+			}},
+			"bootcmd:\n    - foo\n    - |-\n      bar\n      barfoo\n      barbar\n    - foobar\n",
+			false,
+		},
+	}
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResult := testCase.testData.String()
+			if (actualResult != testCase.expResult) != testCase.wantErr {
+				t.Logf("%+v\n", string(actualResult))
+				t.Errorf("failed, expected %s", testCase.expResult)
+			}
+		})
+	}
+
+}
+
 func TestRunCmds(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -221,7 +257,7 @@ func TestRunCmds(t *testing.T) {
 	}{
 		{
 			"single commands",
-			RunCmds{[]RunCmd{
+			RunCmds{[]CliCmd{
 				"foo", "bar", "foobar",
 			}},
 			"runcmd:\n    - foo\n    - bar\n    - foobar\n",
@@ -229,7 +265,7 @@ func TestRunCmds(t *testing.T) {
 		},
 		{
 			"multiple commands",
-			RunCmds{[]RunCmd{
+			RunCmds{[]CliCmd{
 				"foo", "bar\nbarfoo\nbarbar", "foobar",
 			}},
 			"runcmd:\n    - foo\n    - |-\n      bar\n      barfoo\n      barbar\n    - foobar\n",
@@ -263,7 +299,10 @@ func TestUserData(t *testing.T) {
 		{
 			"sparse",
 			UserData{
-				RunCmds: []RunCmd{
+				BootCmds: []CliCmd{
+					"foo", "bar\nbarfoo\nbarbar",
+				},
+				RunCmds: []CliCmd{
 					"foo", "bar\nbarfoo\nbarbar", "foobar",
 				}},
 			`#cloud-config
@@ -276,6 +315,12 @@ runcmd:
       barfoo
       barbar
     - foobar
+bootcmd:
+    - foo
+    - |-
+      bar
+      barfoo
+      barbar
 `,
 			false,
 		},
