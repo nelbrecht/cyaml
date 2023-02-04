@@ -2,6 +2,7 @@ package cyaml
 
 import (
 	"testing"
+	"time"
 )
 
 func TestWriteFiles(t *testing.T) {
@@ -269,6 +270,69 @@ func TestRunCmds(t *testing.T) {
 				"foo", "bar\nbarfoo\nbarbar", "foobar",
 			}},
 			"runcmd:\n    - foo\n    - |-\n      bar\n      barfoo\n      barbar\n    - foobar\n",
+			false,
+		},
+	}
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResult := testCase.testData.String()
+			if (actualResult != testCase.expResult) != testCase.wantErr {
+				t.Logf("%+v\n", string(actualResult))
+				t.Errorf("failed, expected %s", testCase.expResult)
+			}
+		})
+	}
+}
+
+func TestUserExpiredate(t *testing.T) {
+	tests := []struct {
+		name      string
+		testData  time.Time
+		expResult string
+		wantErr   bool
+	}{
+		{
+			"user",
+			time.Unix(1675413179, 0),
+			"users:\n    - expiredate: \"2023-02-03\"\n",
+			false,
+		},
+	}
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			usr := User{}
+			usr.SetExpireDate(testCase.testData)
+			users := Users{[]User{usr}}
+			actualResult := users.String()
+			if (actualResult != testCase.expResult) != testCase.wantErr {
+				t.Logf("%+v\n", string(actualResult))
+				t.Errorf("failed, expected %s", testCase.expResult)
+			}
+		})
+	}
+}
+
+func TestUsers(t *testing.T) {
+	tests := []struct {
+		name      string
+		testData  Users
+		expResult string
+		wantErr   bool
+	}{
+		{
+			"user",
+			Users{
+				[]User{
+					User{Name: "username", Homedir: "/home/dir", Expiredate: "2023-02-03"},
+					User{Default: "asdf"},
+				},
+			},
+			`users:
+    - name: username
+      expiredate: "2023-02-03"
+      homedir: /home/dir
+    - default: asdf
+`,
 			false,
 		},
 	}
